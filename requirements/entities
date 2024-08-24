@@ -1,11 +1,13 @@
-В качестве БД предпологается использовать postgres для обсепечени согласованости данных и атомарности.
+В качестве БД предполагается использовать postgres для обсепечения согласованности данных и атомарности.
 
 Place:
 id: uuid
 name: str
-address: str (or smth more complex, eg. to allow searching by city)
+address: str (full address)
+address_city: str
 host: uuid (user id)
 created_at: datetime
+status: text ("created", "deleted")
 
 
 Watch:
@@ -25,3 +27,4 @@ id: uuid
 watch_id: uuid
 participant_id: uuid
 created_at: datetime
+status: text ("created", "canceled")
