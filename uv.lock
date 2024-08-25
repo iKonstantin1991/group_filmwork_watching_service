@@ -142,6 +142,18 @@ wheels = [
 ]
 
 [[package]]
+name = "asgi-correlation-id"
+version = "4.3.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "starlette" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/2d/b9/ade2a890d853cc92e721bb566d2d47ed4b581411a838f438bb6c2bc2eef8/asgi_correlation_id-4.3.2.tar.gz", hash = "sha256:84058a64b67e1ac7074177209c756f14e1e4b6958689bf2ef34f8b60a87c794f", size = 19999 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/62/90/9ba1637d4c882fd910ad6265504918dff58279e335d0fab27cf0eb6cb32e/asgi_correlation_id-4.3.2-py3-none-any.whl", hash = "sha256:82c0608b5cbe7abde1da1cbee07d9330d050b6ec179b8c8b7d6cf0ddc2aaa4da", size = 15182 },
+]
+
+[[package]]
 name = "async-timeout"
 version = "4.0.3"
 source = { registry = "https://pypi.org/simple" }
@@ -423,6 +435,7 @@ source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
     { name = "alembic" },
+    { name = "asgi-correlation-id" },
     { name = "asyncpg" },
     { name = "black" },
     { name = "fastapi", extra = ["standard"] },
@@ -438,6 +451,7 @@ dependencies = [
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.10.5" },
     { name = "alembic", specifier = "==1.13.2" },
+    { name = "asgi-correlation-id", specifier = ">=4.3.2" },
     { name = "asyncpg", specifier = ">=0.29.0" },
     { name = "black", specifier = ">=24.8.0" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.112.2" },
