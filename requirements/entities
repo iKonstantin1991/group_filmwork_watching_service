@@ -29,3 +29,4 @@ participant_id: uuid
 created_at: datetime
 status: text ("created", "canceled")
 seats: int
+modified_at: datetime
