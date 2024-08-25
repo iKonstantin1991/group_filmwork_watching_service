@@ -10,6 +10,8 @@ logging_config.dictConfig(LOGGING)
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env")
 
+    project_name: str = "Group watching service"
+
     postgres_db: str = "postgres"
     postgres_user: str = "postgres"
     postgres_password: str = "postgres"
