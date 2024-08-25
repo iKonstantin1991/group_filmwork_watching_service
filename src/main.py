@@ -2,11 +2,12 @@ import logging
 from contextlib import asynccontextmanager
 
 import aiohttp
+from redis.asyncio import Redis
 from fastapi import FastAPI, Request, status
 from fastapi.responses import ORJSONResponse
 from asgi_correlation_id import CorrelationIdMiddleware
 
-from src import http_client
+from src import http_client, cache
 from src.config import settings
 from src.ping import router as ping_router
 from src.loggers import setup_logging
@@ -17,9 +18,11 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    cache.cache = Redis(host=settings.redis_host, port=settings.redis_port)
     http_client.session = aiohttp.ClientSession()
     yield
     await http_client.session.close()
+    await cache.cache.close()
 
 
 app = FastAPI(
