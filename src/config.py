@@ -1,14 +1,10 @@
-from logging import config as logging_config
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
-from src.logger import LOGGING
-
-logging_config.dictConfig(LOGGING)
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env")
+
+    project_name: str = "Group watching service"
 
     postgres_db: str = "postgres"
     postgres_user: str = "postgres"
@@ -17,5 +13,7 @@ class Settings(BaseSettings):
     postgres_port: int = 5431
     echo_in_db: bool = False
 
+    log_file: str
 
-settings = Settings()
+
+settings = Settings()  # type: ignore[call-arg]
