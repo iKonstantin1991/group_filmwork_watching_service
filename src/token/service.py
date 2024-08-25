@@ -33,7 +33,7 @@ class TokenService:
         self._cache_storage = cache_storage
         self._http_session = http_session
 
-    async def get_user_from_token(self, access_token: str) -> User | None:
+    def get_user_from_token(self, access_token: str) -> User | None:
         logger.info("Getting user from token")
         try:
             payload = self._decode_access_token(access_token)
