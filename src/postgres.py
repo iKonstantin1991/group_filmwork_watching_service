@@ -1,5 +1,7 @@
-from sqlalchemy.orm import declarative_base, sessionmaker
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from typing import AsyncGenerator
+
+from sqlalchemy.orm import declarative_base
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
 from src.config import settings
 
@@ -9,10 +11,10 @@ dsn = (
     f"{settings.postgres_host}:{settings.postgres_port}/{settings.postgres_db}"
 )
 engine = create_async_engine(dsn, echo=settings.echo_in_db, future=True)
-async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+async_session = async_sessionmaker(engine, expire_on_commit=False)
 
 
-async def get_session() -> AsyncSession:
+async def get_session() -> AsyncGenerator[AsyncSession]:
     async with async_session() as session:
         try:
             yield session
