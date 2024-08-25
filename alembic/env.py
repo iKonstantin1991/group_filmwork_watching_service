@@ -8,6 +8,9 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 from src.postgres import Base, dsn
+from src.place import models
+from src.reservation import models
+from src.watch import models
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
