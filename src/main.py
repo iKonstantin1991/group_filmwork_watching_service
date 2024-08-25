@@ -5,6 +5,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.responses import ORJSONResponse
 
 from src.config import settings
+from src.ping import router as ping_router
 
 
 logger = logging.getLogger(__name__)
@@ -22,6 +23,8 @@ app = FastAPI(
     default_response_class=ORJSONResponse,
     lifespan=lifespan,
 )
+
+app.include_router(ping_router)
 
 
 @app.middleware("http")
