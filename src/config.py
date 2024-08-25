@@ -16,4 +16,4 @@ class Settings(BaseSettings):
     log_file: str
 
 
-settings = Settings()
+settings = Settings()  # type: ignore[call-arg]

@@ -4,4 +4,4 @@ session: ClientSession | None = None
 
 
 def get_session() -> ClientSession:
-    return session
+    return session  # type: ignore[return-value]
