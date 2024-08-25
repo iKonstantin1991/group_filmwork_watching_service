@@ -2,7 +2,7 @@ from logging import config as logging_config
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from core.logger import LOGGING
+from src.logger import LOGGING
 
 logging_config.dictConfig(LOGGING)
 
@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     postgres_password: str = "postgres"
     postgres_host: str = "127.0.0.1"
     postgres_port: int = 5432
+    echo_in_db: bool = False
 
 
 settings = Settings()

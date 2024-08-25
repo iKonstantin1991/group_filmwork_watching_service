@@ -6,7 +6,7 @@ from sqlalchemy import ForeignKey, Text, func, Integer, DateTime, Numeric
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 
-from db.postgres import Base
+from src.postgres import Base
 
 
 class Place(Base):
