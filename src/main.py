@@ -1,9 +1,11 @@
 import logging
 from contextlib import asynccontextmanager
 
+import aiohttp
 from fastapi import FastAPI, Request, status
 from fastapi.responses import ORJSONResponse
 
+from src import http_client
 from src.config import settings
 from src.ping import router as ping_router
 
@@ -13,7 +15,9 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    http_client.session = aiohttp.ClientSession()
     yield
+    await http_client.session.close()
 
 
 app = FastAPI(
@@ -24,7 +28,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-app.include_router(ping_router)
+app.include_router(ping_router, tags=["ping"])
 
 
 @app.middleware("http")
