@@ -17,7 +17,7 @@ class Place(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
     name: Mapped[str] = mapped_column(Text, nullable=False)
-    address_without_city: Mapped[str] = mapped_column(Text, nullable=False)
+    address: Mapped[str] = mapped_column(Text, nullable=False)
     city: Mapped[str] = mapped_column(Text, nullable=False)
     host: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     created_at: Mapped[datetime] = mapped_column(insert_default=func.now())
