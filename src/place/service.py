@@ -1,0 +1,56 @@
+from uuid import UUID, uuid4
+import logging
+from datetime import datetime
+
+from sqlalchemy import select, update
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.place.schemas import Place, PlaceCreate
+from src.place.models import Place as PlaceDB
+from src.place.constants import PlaceStatus
+from src.place.exceptions import PlacePermissionError
+
+logger = logging.getLogger(__name__)
+
+
+class PlaceService:
+    def __init__(self, db_session: AsyncSession) -> None:
+        self._db_session = db_session
+
+    async def get_places_by_host(self, host_id: UUID) -> list[Place]:
+        logger.info("Getting places for host %s", host_id)
+        places_db = await self._db_session.scalars(select(PlaceDB).where(PlaceDB.host == host_id))
+        return [Place.model_validate(place_db) for place_db in places_db]
+
+    async def get_place_by_id(self, place_id: UUID) -> Place | None:
+        logger.info("Getting place by id %s", place_id)
+        place_db = await self._db_session.get(PlaceDB, place_id)
+        return Place.model_validate(place_db) if place_db else None
+
+    async def create_place(self, new_place: PlaceCreate, host_id: UUID) -> Place:
+        logger.info("Creating new place %s for host %s", new_place, host_id)
+        place_db = PlaceDB(
+            id=uuid4(),
+            name=new_place.name,
+            address=new_place.address,
+            city=new_place.city,
+            host=host_id,
+            created_at=datetime.now(),
+            status=PlaceStatus.OPEN,
+        )
+        self._db_session.add(place_db)
+        await self._db_session.commit()
+        return Place.model_validate(place_db)
+
+    async def close_place(self, place_id: UUID, host_id: UUID) -> Place | None:
+        logger.info("Closing place %s for host %s", place_id, host_id)
+        place_db = await self._db_session.get(PlaceDB, place_id)
+        if not place_db:
+            return None
+        if place_db.host != host_id:
+            raise PlacePermissionError
+
+        place_db.status = PlaceStatus.CLOSED
+        self._db_session.add(place_db)
+        await self._db_session.commit()
+        return Place.model_validate(place_db)
