@@ -554,7 +554,7 @@ requires-dist = [
     { name = "orjson", specifier = ">=3.10.7" },
     { name = "pydantic-settings", specifier = "==2.4.0" },
     { name = "pyjwt", specifier = ">=2.9.0" },
-    { name = "redis" },
+    { name = "redis", specifier = ">=5.0.8" },
     { name = "sqlalchemy", specifier = "==2.0.32" },
     { name = "uvicorn", specifier = ">=0.30.6" },
 ]

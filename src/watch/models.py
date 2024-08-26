@@ -1,5 +1,5 @@
 import uuid
-from typing import List
+from typing import List, TYPE_CHECKING
 from datetime import datetime
 
 from sqlalchemy import ForeignKey, Text, func, Integer, DateTime, Numeric
@@ -7,6 +7,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 
 from src.postgres import Base
+
+if TYPE_CHECKING:
+    from src.place.models import Place
+    from src.reservation.models import Reservation
 
 
 class Watch(Base):
