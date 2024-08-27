@@ -2,13 +2,16 @@ from uuid import UUID, uuid4
 import logging
 from datetime import datetime
 
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.place.schemas import Place, PlaceCreate
 from src.place.models import Place as PlaceDB
 from src.place.constants import PlaceStatus
 from src.place.exceptions import PlacePermissionError
+
+from src.reservation.models import Reservation as ReservationDB
+from src.watch.models import Watch as WatchDB
 
 logger = logging.getLogger(__name__)
 
@@ -17,9 +20,12 @@ class PlaceService:
     def __init__(self, db_session: AsyncSession) -> None:
         self._db_session = db_session
 
-    async def get_places_by_host(self, host_id: UUID) -> list[Place]:
-        logger.info("Getting places for host %s", host_id)
-        places_db = await self._db_session.scalars(select(PlaceDB).where(PlaceDB.host == host_id))
+    async def get_places_by_host(self, host_id: UUID, only_open: bool = False) -> list[Place]:
+        logger.info("Getting places for host %s, only open: %s", host_id, only_open)
+        expression = select(PlaceDB).where(PlaceDB.host == host_id)
+        if only_open:
+            expression = expression.where(PlaceDB.status == PlaceStatus.OPEN)
+        places_db = await self._db_session.scalars(expression)
         return [Place.model_validate(place_db) for place_db in places_db]
 
     async def get_place_by_id(self, place_id: UUID) -> Place | None:

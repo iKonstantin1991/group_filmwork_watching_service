@@ -17,17 +17,19 @@ router = APIRouter()
 @router.get("/")
 async def get_places(
     host_id: UUID,
+    only_open: bool = False,
     place_service: PlaceService = Depends(get_place_service),
 ) -> list[Place]:
-    return await place_service.get_places_by_host(host_id)
+    return await place_service.get_places_by_host(host_id, only_open)
 
 
 @router.get("/my")
 async def get_my_places(
     user: User = Depends(get_authenticated_user),
+    only_open: bool = False,
     place_service: PlaceService = Depends(get_place_service),
 ) -> list[Place]:
-    return await place_service.get_places_by_host(user.id)
+    return await place_service.get_places_by_host(user.id, only_open)
 
 
 @router.get("/{place_id}")
