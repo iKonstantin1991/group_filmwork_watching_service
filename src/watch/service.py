@@ -2,15 +2,15 @@ import datetime
 import logging
 from uuid import UUID, uuid4
 
-from sqlalchemy import select, and_
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.place.constants import PlaceStatus
 from src.place.models import Place
 from src.watch.constants import WatchStatus
-from src.watch.exceptions import WatchPermissionError, WatchClosingError, WatchCreatingError
-from src.watch.schemas import Watch, WatchCreate, WatchFilters
+from src.watch.exceptions import WatchClosingError, WatchCreatingError, WatchPermissionError
 from src.watch.models import Watch as WatchDb
+from src.watch.schemas import Watch, WatchCreate, WatchFilters
 
 logger = logging.getLogger(__name__)
 
@@ -43,9 +43,7 @@ class WatchService:
         logger.info("Creating watch %s for host_id = %s", watch, host_id)
         # toDo check if filmwork_id in content service
 
-        place = await self._db_session.execute(
-            select(Place).where(Place.id == watch.place_id).with_for_update()
-        )
+        place = await self._db_session.execute(select(Place).where(Place.id == watch.place_id).with_for_update())
         place = place.scalar_one_or_none()
         if not place:
             raise WatchCreatingError("Place not found")
