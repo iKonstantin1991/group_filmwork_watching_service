@@ -45,12 +45,12 @@ async def get_watch(
 
 @router.post("/")
 async def create_watch(
-    watch: WatchCreate,
+    watch_create: WatchCreate,
     user: Annotated[User, Depends(get_authenticated_user)],
     watch_service: Annotated[WatchService, Depends(get_watch_service)],
 ) -> Watch:
     try:
-        watch = await watch_service.create_watch(watch, user.id)
+        watch = await watch_service.create_watch(watch_create, user.id)
     except WatchPermissionError:
         raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail="Permission denied") from None
     except WatchCreatingError as error:

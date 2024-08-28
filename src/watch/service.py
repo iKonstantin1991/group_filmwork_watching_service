@@ -43,8 +43,10 @@ class WatchService:
         logger.info("Creating watch %s for host_id = %s", watch, host_id)
         # toDo check if filmwork_id in content service
 
-        place = await self._db_session.execute(select(Place).where(Place.id == watch.place_id).with_for_update())
-        place = place.scalar_one_or_none()
+        place_query_result = await self._db_session.execute(
+            select(Place).where(Place.id == watch.place_id).with_for_update()
+        )
+        place = place_query_result.scalar_one_or_none()
         if not place:
             raise WatchCreatingError("Place not found")
         if place.status == PlaceStatus.CLOSED:
