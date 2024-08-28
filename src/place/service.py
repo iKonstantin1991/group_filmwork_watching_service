@@ -8,9 +8,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.place.schemas import Place, PlaceCreate
 from src.place.models import Place as PlaceDB
 from src.place.constants import PlaceStatus
-from src.place.exceptions import PlacePermissionError
+from src.place.exceptions import PlacePermissionError, PlaceCloseError
 
 from src.reservation.models import Reservation as ReservationDB
+from src.watch.constants import WatchStatus
 from src.watch.models import Watch as WatchDB
 
 logger = logging.getLogger(__name__)
@@ -50,11 +51,21 @@ class PlaceService:
 
     async def close_place(self, place_id: UUID, host_id: UUID) -> Place | None:
         logger.info("Closing place %s for host %s", place_id, host_id)
-        place_db = await self._db_session.get(PlaceDB, place_id)
+        place_db = await self._db_session.scalar(select(PlaceDB).where(PlaceDB.id == place_id).with_for_update())
         if not place_db:
             return None
+        if place_db.status == PlaceStatus.CLOSED:
+            return Place.model_validate(place_db)
         if place_db.host != host_id:
             raise PlacePermissionError
+
+        incoming_watches = await self._db_session.scalars(
+            select(WatchDB).where(
+                WatchDB.place_id == place_id, WatchDB.time > datetime.now(), WatchDB.status == WatchStatus.CREATED
+            )
+        )
+        if incoming_watches.first():
+            raise PlaceCloseError
 
         place_db.status = PlaceStatus.CLOSED
         self._db_session.add(place_db)
