@@ -4,3 +4,7 @@ class PlaceBaseError(Exception):
 
 class PlacePermissionError(PlaceBaseError):
     pass
+
+
+class PlaceCloseError(PlaceBaseError):
+    pass

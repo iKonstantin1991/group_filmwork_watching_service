@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from src.place.schemas import Place, PlaceCreate
 from src.place.dependencies import get_place_service
 from src.place.service import PlaceService
-from src.place.exceptions import PlacePermissionError
+from src.place.exceptions import PlacePermissionError, PlaceCloseError
 from src.token.dependencies import get_authenticated_user
 from src.token.schemas import User
 
@@ -62,6 +62,9 @@ async def close_place(
         place = await place_service.close_place(place_id, user.id)
     except PlacePermissionError:
         raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail="Permission denied")
+    except PlaceCloseError:
+        raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail="Incoming watches exists")
+
     if not place:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Place not found")
     return place
