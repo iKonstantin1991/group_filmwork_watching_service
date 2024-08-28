@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 
 from src.watch.dependencies import get_watch_service, check_watch_filters
-from src.watch.exceptions import WatchPermissionError, WatchClosingError
+from src.watch.exceptions import WatchPermissionError, WatchClosingError, WatchCreatingError
 from src.watch.schemas import Watch, WatchCreate, WatchFilters
 from src.watch.service import WatchService
 from src.token.dependencies import get_authenticated_user
@@ -48,7 +48,13 @@ async def create_watch(
     user: User = Depends(get_authenticated_user),
     watch_service: WatchService = Depends(get_watch_service),
 ) -> Watch:
-    return await watch_service.create_watch(watch, user.id)
+    try:
+        watch = await watch_service.create_watch(watch, user.id)
+    except WatchPermissionError:
+        raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail="Permission denied")
+    except WatchCreatingError as error:
+        raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail=str(error))
+    return watch
 
 
 @router.delete("/{watch_id}")

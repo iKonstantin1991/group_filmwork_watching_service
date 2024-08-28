@@ -5,8 +5,10 @@ from uuid import UUID, uuid4
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.place.constants import PlaceStatus
+from src.place.models import Place
 from src.watch.constants import WatchStatus
-from src.watch.exceptions import WatchPermissionError, WatchClosingError
+from src.watch.exceptions import WatchPermissionError, WatchClosingError, WatchCreatingError
 from src.watch.schemas import Watch, WatchCreate, WatchFilters
 from src.watch.models import Watch as WatchDb
 
@@ -40,7 +42,18 @@ class WatchService:
     async def create_watch(self, watch: WatchCreate, host_id: UUID) -> Watch:
         logger.info("Creating watch %s for host_id = %s", watch, host_id)
         # toDo check if filmwork_id in content service
-        # toDo check if place exists and place is mine
+
+        place = await self._db_session.execute(
+            select(Place).where(Place.id == watch.place_id).with_for_update()
+        )
+        place = place.scalar_one_or_none()
+        if not place:
+            raise WatchCreatingError("Place not found")
+        if place.status == PlaceStatus.CLOSED:
+            raise WatchCreatingError("Place status is closed")
+        if place.host != host_id:
+            raise WatchPermissionError
+
         new_watch = WatchDb(
             id=uuid4(),
             host=host_id,

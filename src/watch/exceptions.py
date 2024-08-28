@@ -8,3 +8,7 @@ class WatchPermissionError(WatchBaseError):
 
 class WatchClosingError(WatchBaseError):
     pass
+
+
+class WatchCreatingError(WatchBaseError):
+    pass
