@@ -65,7 +65,7 @@ class WatchService:
         if watch.time < datetime.datetime.now():
             raise WatchClosingError("Can't close past watch")
 
-        watch.status = WatchStatus.CLOSED
+        watch.status = WatchStatus.CANCELLED
         self._db_session.add(watch)
         # toDo cancel reservations
         await self._db_session.commit()
