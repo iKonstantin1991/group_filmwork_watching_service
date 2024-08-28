@@ -1,16 +1,14 @@
-from uuid import UUID, uuid4
 import logging
 from datetime import datetime
+from uuid import UUID, uuid4
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.place.schemas import Place, PlaceCreate
-from src.place.models import Place as PlaceDB
 from src.place.constants import PlaceStatus
-from src.place.exceptions import PlacePermissionError, PlaceCloseError
-
-from src.reservation.models import Reservation as ReservationDB
+from src.place.exceptions import PlaceCloseError, PlacePermissionError
+from src.place.models import Place as PlaceDB
+from src.place.schemas import Place, PlaceCreate
 from src.watch.constants import WatchStatus
 from src.watch.models import Watch as WatchDB
 
@@ -61,8 +59,10 @@ class PlaceService:
 
         incoming_watches = await self._db_session.scalars(
             select(WatchDB).where(
-                WatchDB.place_id == place_id, WatchDB.time > datetime.now(), WatchDB.status == WatchStatus.CREATED
-            )
+                WatchDB.place_id == place_id,
+                WatchDB.time > datetime.now(),
+                WatchDB.status == WatchStatus.CREATED,
+            ),
         )
         if incoming_watches.first():
             raise PlaceCloseError
