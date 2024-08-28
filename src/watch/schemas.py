@@ -26,8 +26,6 @@ class WatchCreate(BaseModel):
     seats: int
     price: float
 
-    model_config = ConfigDict(from_attributes=True)
-
 
 class WatchFilters(BaseModel):
     host_id: UUID | None
