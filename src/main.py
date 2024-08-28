@@ -11,6 +11,7 @@ from asgi_correlation_id import CorrelationIdMiddleware
 from src import http_client, cache
 from src.config import settings
 from src.ping import router as ping_router
+from src.place.router import router as place_router
 from src.watch.router import router as watch_router
 from src.loggers import setup_logging
 
@@ -37,6 +38,7 @@ app = FastAPI(
 app.add_middleware(CorrelationIdMiddleware)
 
 app.include_router(ping_router, tags=["ping"])
+app.include_router(place_router, prefix="/api/v1/places", tags=["place"])
 app.include_router(watch_router, prefix="/api/v1/watches", tags=["watch"])
 
 
