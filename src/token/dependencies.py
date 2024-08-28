@@ -1,15 +1,15 @@
-from typing import Annotated
 from http import HTTPStatus
+from typing import Annotated
 
+from aiohttp import ClientSession
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPBearer
-from aiohttp import ClientSession
 from redis.asyncio import Redis
 
-from src.http_client import get_session
 from src.cache import get_cache
-from src.token.service import TokenService
+from src.http_client import get_session
 from src.token.schemas import User
+from src.token.service import TokenService
 
 
 class JWTBearer(HTTPBearer):
