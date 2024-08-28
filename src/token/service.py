@@ -1,16 +1,15 @@
-from typing import Any, Dict, List, Tuple
-from uuid import UUID
 import logging
+from typing import Any
+from uuid import UUID
 
 import jwt
-from redis.asyncio import Redis
-from redis import RedisError
-from aiohttp import ClientSession, ClientError
+from aiohttp import ClientError, ClientSession
 from pydantic import BaseModel, ValidationError
+from redis import RedisError
+from redis.asyncio import Redis
 
 from src.config import settings
 from src.token.schemas import User
-
 
 _ALGORITHM = "RS256"
 _TOKEN_KEY = "service_tokens"
@@ -25,7 +24,7 @@ class TokenServiceError(Exception):
 
 class AccessTokenPayload(BaseModel):
     user_id: UUID
-    roles: List[str]
+    roles: list[str]
 
 
 class TokenService:
@@ -55,7 +54,7 @@ class TokenService:
         await self._store_service_tokens(new_access_token, new_refresh_token)
         return new_access_token
 
-    async def _request_service_tokens(self) -> Tuple[str, str]:
+    async def _request_service_tokens(self) -> tuple[str, str]:
         logger.info("Requesting service tokens")
         try:
             async with self._http_session.post(
@@ -67,9 +66,9 @@ class TokenService:
                 return body["access_token"], body["refresh_token"]
         except ClientError as e:
             logger.error("Failed to request service tokens: %s", e)
-            raise TokenServiceError
+            raise TokenServiceError from e
 
-    async def _refresh_service_tokens(self, refresh_token: str) -> Tuple[str, str]:
+    async def _refresh_service_tokens(self, refresh_token: str) -> tuple[str, str]:
         logger.info("Refreshing service tokens")
         try:
             async with self._http_session.post(
@@ -81,7 +80,7 @@ class TokenService:
                 return body["access_token"], body["refresh_token"]
         except ClientError as e:
             logger.error("Failed to refresh service tokens: %s", e)
-            raise TokenServiceError
+            raise TokenServiceError from e
 
     def _is_access_token_valid(self, token: str) -> bool:
         try:
@@ -102,16 +101,16 @@ class TokenService:
     def _decode_access_token(self, token: str) -> AccessTokenPayload:
         return AccessTokenPayload(**self._decode_token(token))
 
-    def _decode_token(self, token: str) -> Dict[str, Any]:
+    def _decode_token(self, token: str) -> dict[str, Any]:
         return jwt.decode(token, settings.jwt_public_key, algorithms=[_ALGORITHM])
 
-    async def _get_service_tokens(self) -> Tuple[str | None, str | None]:
+    async def _get_service_tokens(self) -> tuple[str | None, str | None]:
         logger.info("Getting stored service tokens")
         try:
             tokens = await self._cache_storage.get(_TOKEN_KEY)
         except RedisError as e:
             logger.error("Failed to get stored service tokens: %s", e)
-            raise TokenServiceError
+            raise TokenServiceError from e
         return tokens.decode().split() if tokens else (None, None)
 
     async def _store_service_tokens(self, access_token: str, refresh_token: str) -> None:

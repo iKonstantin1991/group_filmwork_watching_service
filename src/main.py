@@ -3,17 +3,17 @@ from contextlib import asynccontextmanager
 
 import aiohttp
 import uvicorn
-from redis.asyncio import Redis
+from asgi_correlation_id import CorrelationIdMiddleware
 from fastapi import FastAPI, Request, status
 from fastapi.responses import ORJSONResponse
-from asgi_correlation_id import CorrelationIdMiddleware
+from redis.asyncio import Redis
 
-from src import http_client, cache
+from src import cache, http_client
 from src.config import settings
+from src.loggers import setup_logging
 from src.ping import router as ping_router
 from src.place.router import router as place_router
 from src.watch.router import router as watch_router
-from src.loggers import setup_logging
 
 setup_logging()
 logger = logging.getLogger(__name__)
