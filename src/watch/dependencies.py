@@ -1,3 +1,4 @@
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import Depends
@@ -8,7 +9,7 @@ from src.watch.schemas import WatchFilters
 from src.watch.service import WatchService
 
 
-def get_watch_service(db_session: AsyncSession = Depends(get_session)) -> WatchService:
+def get_watch_service(db_session: Annotated[AsyncSession, Depends(get_session)]) -> WatchService:
     return WatchService(db_session)
 
 
