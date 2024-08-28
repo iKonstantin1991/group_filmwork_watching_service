@@ -2,6 +2,7 @@ import logging
 from contextlib import asynccontextmanager
 
 import aiohttp
+import uvicorn
 from redis.asyncio import Redis
 from fastapi import FastAPI, Request, status
 from fastapi.responses import ORJSONResponse
@@ -11,6 +12,7 @@ from src import http_client, cache
 from src.config import settings
 from src.ping import router as ping_router
 from src.place.router import router as place_router
+from src.watch.router import router as watch_router
 from src.loggers import setup_logging
 
 setup_logging()
@@ -37,6 +39,7 @@ app.add_middleware(CorrelationIdMiddleware)
 
 app.include_router(ping_router, tags=["ping"])
 app.include_router(place_router, prefix="/api/v1/places", tags=["place"])
+app.include_router(watch_router, prefix="/api/v1/watches", tags=["watch"])
 
 
 @app.middleware("http")
@@ -51,3 +54,13 @@ async def before_request(request: Request, call_next):
 async def exception_handler(request: Request, exc: Exception) -> ORJSONResponse:
     logger.error("Exception has occurred when handled request to %s: %s", request.url, exc)
     return ORJSONResponse(status_code=500, content={"detail": "internal server error"})
+
+
+if __name__ == "__main__":
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        log_level=logging.DEBUG,
+        reload=True,
+    )
