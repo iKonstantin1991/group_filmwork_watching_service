@@ -41,8 +41,6 @@ class WatchService:
 
     async def create_watch(self, watch: WatchCreate, host_id: UUID) -> Watch:
         logger.info("Creating watch %s for host_id = %s", watch, host_id)
-        # toDo check if filmwork_id in content service
-
         place_query_result = await self._db_session.execute(
             select(Place).where(Place.id == watch.place_id).with_for_update()
         )

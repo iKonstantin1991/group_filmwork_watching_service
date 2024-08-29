@@ -4,6 +4,8 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from src.filmwork.dependencies import get_filmwork_service
+from src.filmwork.service import FilmworkService
 from src.token.dependencies import get_authenticated_user
 from src.token.schemas import User
 from src.watch.dependencies import check_watch_filters, get_watch_service
@@ -48,7 +50,10 @@ async def create_watch(
     watch_create: WatchCreate,
     user: Annotated[User, Depends(get_authenticated_user)],
     watch_service: Annotated[WatchService, Depends(get_watch_service)],
+    filmwork_service: Annotated[FilmworkService, Depends(get_filmwork_service)],
 ) -> Watch:
+    if filmwork_service.get_filmwork_by_id(watch_create.filmwork_id) is None:
+        raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail="Filmwork not found") from None
     try:
         watch = await watch_service.create_watch(watch_create, user.id)
     except WatchPermissionError:
