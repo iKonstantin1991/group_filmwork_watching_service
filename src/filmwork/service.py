@@ -1,12 +1,55 @@
+import logging
+from http import HTTPStatus
 from uuid import UUID
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from aiohttp import ClientResponseError, ClientSession
+
+from src.config import settings
+from src.filmwork.exceptions import FilmworkError
+from src.filmwork.schemas import Filmwork
+from src.token.service import TokenService, TokenServiceError
+
+logger = logging.getLogger(__name__)
 
 
 class FilmworkService:
-    def __init__(self, db_session: AsyncSession) -> None:
-        self._db_session = db_session
+    def __init__(self, http_session: ClientSession) -> None:
+        self._http_session = http_session
 
-    async def get_filmwork_by_id(self, filmwork_id: UUID) -> UUID | None:
-        # toDo get f'/api/v1/films/{filmwork_id}'
-        return filmwork_id
+    async def get_filmwork_by_id(self, filmwork_id: UUID, token_service: TokenService) -> Filmwork | None:
+        logger.info("Getting filmwork by id = %s", filmwork_id)
+        if settings.debug:
+            return self._get_debug_filmwork(filmwork_id)
+
+        try:
+            token = token_service.get_service_access_token()
+        except TokenServiceError:
+            raise FilmworkError("Error with token") from None
+
+        try:
+            async with self._http_session.get(
+                f"{settings.content_service_url}/api/v1/films/{filmwork_id}",
+                headers={"Authorization": f"Bearer {token}"},
+            ) as response:
+                response.raise_for_status()
+        except ClientResponseError as error:
+            if error.status == HTTPStatus.NOT_FOUND:
+                return None
+            else:
+                logger.error("Failed to get filmwork by id = %s: %s", filmwork_id, error)
+                raise FilmworkError("Failed to get filmwork") from error
+
+        return Filmwork.model_validate(response.json())
+
+    def _get_debug_filmwork(self, filmwork_id: UUID) -> Filmwork:
+        logger.info("Getting debug filmwork by id = %s", filmwork_id)
+        return Filmwork(
+            id=filmwork_id,
+            title="title",
+            description="title",
+            imdb_rating=10.0,
+            genres=[],
+            actors=[],
+            writers=[],
+            directors=[],
+        )
