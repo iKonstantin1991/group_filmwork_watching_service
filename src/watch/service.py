@@ -2,11 +2,12 @@ import datetime
 import logging
 from uuid import UUID, uuid4
 
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.place.constants import PlaceStatus
 from src.place.models import Place
+from src.reservation.constants import ReservationStatus
 from src.reservation.models import Reservation
 from src.watch.constants import WatchStatus
 from src.watch.exceptions import WatchClosingError, WatchCreatingError, WatchPermissionError
@@ -38,9 +39,7 @@ class WatchService:
 
         if conditions:
             query = query.where(and_(*conditions))
-        query = query.join(Reservation, WatchDb.id == Reservation.watch_id, isouter=True).group_by(
-            WatchDb.id
-        )
+        query = query.join(Reservation, WatchDb.id == Reservation.watch_id, isouter=True).group_by(WatchDb.id)
 
         result = await self._db_session.execute(query)
         watches = result.fetchall()
@@ -102,6 +101,9 @@ class WatchService:
 
         watch.status = WatchStatus.CANCELLED
         self._db_session.add(watch)
-        # toDo cancel reservations
+
+        stmt = update(Reservation).where(Reservation.watch_id == watch_id).values(status=ReservationStatus.CANCELLED)
+        await self._db_session.execute(stmt)
+
         await self._db_session.commit()
         return Watch.model_validate(watch)
