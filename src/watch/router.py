@@ -12,7 +12,7 @@ from src.token.schemas import User
 from src.token.service import TokenService
 from src.watch.dependencies import check_watch_filters, get_watch_service
 from src.watch.exceptions import WatchClosingError, WatchCreatingError, WatchPermissionError
-from src.watch.schemas import Watch, WatchCreate, WatchFilters
+from src.watch.schemas import Watch, WatchCreate, WatchFilters, WatchWithAvailableSeats
 from src.watch.service import WatchService
 
 router = APIRouter()
@@ -22,7 +22,7 @@ router = APIRouter()
 async def get_watches_by_filter(
     watch_filters: Annotated[WatchFilters, Depends(check_watch_filters)],
     watch_service: Annotated[WatchService, Depends(get_watch_service)],
-) -> list[Watch]:
+) -> list[WatchWithAvailableSeats]:
     return await watch_service.get_watches_by_filter(watch_filters)
 
 
@@ -30,7 +30,7 @@ async def get_watches_by_filter(
 async def get_my_watches(
     user: Annotated[User, Depends(get_authenticated_user)],
     watch_service: Annotated[WatchService, Depends(get_watch_service)],
-) -> list[Watch]:
+) -> list[WatchWithAvailableSeats]:
     watch_filters = check_watch_filters(host_id=user.id)
     return await watch_service.get_watches_by_filter(watch_filters)
 
@@ -39,7 +39,7 @@ async def get_my_watches(
 async def get_watch(
     watch_id: UUID,
     watch_service: Annotated[WatchService, Depends(get_watch_service)],
-) -> Watch:
+) -> WatchWithAvailableSeats:
     watch_filters = check_watch_filters(watch_id=watch_id)
     watch = await watch_service.get_watches_by_filter(watch_filters)
     if not watch:
