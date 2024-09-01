@@ -91,7 +91,7 @@ class WatchService:
 
     async def close_watch(self, watch_id: UUID, host_id: UUID) -> Watch | None:
         logger.info("Closing watch_id = %s for host_id = %s", watch_id, host_id)
-        watch = await self._db_session.get(WatchDb, watch_id)
+        watch = await self._db_session.scalar(select(WatchDb).where(WatchDb.id == watch_id).with_for_update())
         if not watch:
             return None
         if watch.host != host_id:
