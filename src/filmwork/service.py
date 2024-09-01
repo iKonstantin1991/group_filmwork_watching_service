@@ -23,8 +23,8 @@ class FilmworkService:
 
         try:
             token = token_service.get_service_access_token()
-        except TokenServiceError:
-            raise FilmworkError("Error with token") from None
+        except TokenServiceError as error:
+            raise FilmworkError("Error with token") from error
 
         try:
             async with self._http_session.get(
