@@ -49,19 +49,17 @@ class WatchService:
         watch_with_seats = []
         for watch, available_seats in watches:
             watch_with_seats.append(
-                WatchWithAvailableSeats.model_validate(
-                    WatchWithAvailableSeats(
-                        id=watch.id,
-                        host=watch.host,
-                        filmwork_id=watch.filmwork_id,
-                        place_id=watch.place_id,
-                        time=watch.time,
-                        seats=watch.seats,
-                        price=watch.price,
-                        status=watch.status,
-                        created_at=watch.created_at,
-                        available_seats=available_seats,
-                    )
+                WatchWithAvailableSeats(
+                    id=watch.id,
+                    host=watch.host,
+                    filmwork_id=watch.filmwork_id,
+                    place_id=watch.place_id,
+                    time=watch.time,
+                    seats=watch.seats,
+                    price=watch.price,
+                    status=watch.status,
+                    created_at=watch.created_at,
+                    available_seats=available_seats,
                 )
             )
 
