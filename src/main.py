@@ -9,6 +9,7 @@ from fastapi.responses import ORJSONResponse
 from redis.asyncio import Redis
 
 from src import cache, http_client
+from src.billing.router import router as billing_router
 from src.config import settings
 from src.loggers import setup_logging
 from src.ping import router as ping_router
@@ -42,6 +43,7 @@ app.include_router(ping_router, tags=["ping"])
 app.include_router(place_router, prefix="/api/v1/places", tags=["place"])
 app.include_router(watch_router, prefix="/api/v1/watches", tags=["watch"])
 app.include_router(reservation_router, prefix="/api/v1/reservations", tags=["reservation"])
+app.include_router(billing_router, prefix="/api/v1/billing", tags=["billing"])
 
 
 @app.middleware("http")

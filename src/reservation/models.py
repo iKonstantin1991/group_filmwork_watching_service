@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Integer, Text, func
+from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -21,6 +21,7 @@ class Reservation(Base):
     created_at: Mapped[datetime] = mapped_column(insert_default=func.now())
     status: Mapped[str] = mapped_column(Text, nullable=False)
     seats: Mapped[int] = mapped_column(Integer, nullable=False)
+    total_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     modified_at: Mapped[datetime] = mapped_column(DateTime, insert_default=func.now(), onupdate=func.now())
 
     watch: Mapped["Watch"] = relationship(back_populates="reservations")
