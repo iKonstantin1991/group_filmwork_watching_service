@@ -23,7 +23,11 @@ class Settings(BaseSettings):
     auth_service_port: int = 80
     jwt_public_key: bytes
 
+    content_service_url: str = "http://localhost:8000"
+
     log_file: str
+
+    debug: bool = True
 
 
 settings = Settings()  # type: ignore[call-arg]

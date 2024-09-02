@@ -1,0 +1,2 @@
+class FilmworkError(Exception):
+    pass
