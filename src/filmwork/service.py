@@ -13,16 +13,17 @@ logger = logging.getLogger(__name__)
 
 
 class FilmworkService:
-    def __init__(self, http_session: ClientSession) -> None:
+    def __init__(self, http_session: ClientSession, token_service: TokenService) -> None:
         self._http_session = http_session
+        self.token_service = token_service
 
-    async def get_filmwork_by_id(self, filmwork_id: UUID, token_service: TokenService) -> Filmwork | None:
+    async def get_filmwork_by_id(self, filmwork_id: UUID) -> Filmwork | None:
         logger.info("Getting filmwork by id = %s", filmwork_id)
         if settings.debug:
             return self._get_debug_filmwork(filmwork_id)
 
         try:
-            token = token_service.get_service_access_token()
+            token = self.token_service.get_service_access_token()
         except TokenServiceError as error:
             raise FilmworkError("Error with token") from error
 
@@ -39,7 +40,7 @@ class FilmworkService:
                 logger.error("Failed to get filmwork by id = %s: %s", filmwork_id, error)
                 raise FilmworkError("Failed to get filmwork") from error
 
-        return Filmwork.model_validate(response.json())
+        return Filmwork.model_validate(await response.json())
 
     def _get_debug_filmwork(self, filmwork_id: UUID) -> Filmwork:
         logger.info("Getting debug filmwork by id = %s", filmwork_id)

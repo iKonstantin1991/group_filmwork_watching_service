@@ -7,9 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from src.filmwork.dependencies import get_filmwork_service
 from src.filmwork.exceptions import FilmworkError
 from src.filmwork.service import FilmworkService
-from src.token.dependencies import get_authenticated_user, get_token_service
+from src.token.dependencies import get_authenticated_user
 from src.token.schemas import User
-from src.token.service import TokenService
 from src.watch.dependencies import check_watch_filters, get_watch_service
 from src.watch.exceptions import WatchClosingError, WatchCreatingError, WatchPermissionError
 from src.watch.schemas import Watch, WatchCreate, WatchFilters, WatchWithAvailableSeats
@@ -53,10 +52,9 @@ async def create_watch(
     user: Annotated[User, Depends(get_authenticated_user)],
     watch_service: Annotated[WatchService, Depends(get_watch_service)],
     filmwork_service: Annotated[FilmworkService, Depends(get_filmwork_service)],
-    token_service: Annotated[TokenService, Depends(get_token_service)],
 ) -> Watch:
     try:
-        filmwork = await filmwork_service.get_filmwork_by_id(watch_create.filmwork_id, token_service)
+        filmwork = await filmwork_service.get_filmwork_by_id(watch_create.filmwork_id)
     except FilmworkError as error:
         raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail=str(error)) from error
     if filmwork is None:
@@ -79,7 +77,7 @@ async def close_watch(
     watch_service: Annotated[WatchService, Depends(get_watch_service)],
 ) -> Watch:
     try:
-        watch = await watch_service.close_watch(watch_id, user.id)
+        watch = await watch_service.close_watch(watch_id, user)
     except WatchPermissionError:
         raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail="Permission denied") from None
     except WatchClosingError as error:
