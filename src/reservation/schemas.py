@@ -21,6 +21,7 @@ class Reservation(ReservationBase):
     id: UUID
     participant_id: UUID
     status: ReservationStatus
+    total_price: float
     created_at: datetime
     modified_at: datetime
 

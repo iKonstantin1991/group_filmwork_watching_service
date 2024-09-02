@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from src.reservation import exceptions
-from src.reservation.constants import ReservationStatus
+from src.reservation.constants import PaymentStatus, ReservationStatus
 from src.reservation.models import Reservation as ReservationDb
 from src.reservation.schemas import Reservation, ReservationCreate, ReservationFilters
 from src.token.schemas import User
@@ -85,7 +85,8 @@ class ReservationService:
             watch=watch_db,
             participant_id=user.id,
             seats=new_reservation.seats,
-            status=ReservationStatus.PAID,
+            total_price=new_reservation.seats * watch_db.price,
+            status=ReservationStatus.PENDING,
             created_at=datetime.now(),
             modified_at=datetime.now(),
         )
@@ -93,10 +94,27 @@ class ReservationService:
         await self._db_session.commit()
         return Reservation.model_validate(reservation_db)
 
+    async def complete_reservation(self, reservation_id: UUID, payment_status: str) -> None:
+        logger.info("Completing reservation %s with payment status %s", reservation_id, payment_status)
+        reservation_db = await self._db_session.scalar(
+            select(ReservationDb)
+            .where(ReservationDb.id == reservation_id)
+            .options(joinedload(ReservationDb.watch, innerjoin=True))
+            .with_for_update()
+        )
+        if reservation_db and reservation_db.status == ReservationStatus.PENDING:
+            if payment_status == PaymentStatus.SUCCESSFUL:
+                await self._update_status(reservation_db, ReservationStatus.PAID)
+            else:
+                await self._update_status(reservation_db, ReservationStatus.UNPAID)
+
     async def cancel_reservation(self, reservation_id: UUID, user: User) -> Reservation:
         logger.info("Cancelling reservation %s for user %s", reservation_id, user)
         reservation_db = await self._db_session.scalar(
-            select(ReservationDb).where(ReservationDb.id == reservation_id).options(joinedload(ReservationDb.watch))
+            select(ReservationDb)
+            .where(ReservationDb.id == reservation_id)
+            .options(joinedload(ReservationDb.watch, innerjoin=True))
+            .with_for_update()
         )
         if not reservation_db:
             logger.info("Reservation %s not found", reservation_id)
@@ -107,8 +125,12 @@ class ReservationService:
         if reservation_db.watch.time < datetime.now():
             logger.info("Forbidden to cancel, reservation %s is in the past", reservation_id)
             raise exceptions.ReservationPastWatchError
-        reservation_db.status = ReservationStatus.CANCELLED
+        reservation_db = await self._update_status(reservation_db, ReservationStatus.CANCELLED)
+        return Reservation.model_validate(reservation_db)
+
+    async def _update_status(self, reservation_db: ReservationDb, status: ReservationStatus) -> ReservationDb:
+        reservation_db.status = status
         reservation_db.modified_at = datetime.now()
         self._db_session.add(reservation_db)
         await self._db_session.commit()
-        return Reservation.model_validate(reservation_db)
+        return reservation_db

@@ -1,8 +1,10 @@
 from http import HTTPStatus
 from typing import Annotated
+from urllib.parse import urlencode
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi.responses import RedirectResponse
 
 from src.reservation import exceptions
 from src.reservation.dependencies import check_reservation_filters, get_reservation_service
@@ -51,16 +53,27 @@ async def get_reservation(
 
 @router.post("/")
 async def create_reservation(
-    reservation: ReservationCreate,
+    new_reservation: ReservationCreate,
     user: Annotated[User, Depends(get_authenticated_user)],
     reservation_service: Annotated[ReservationService, Depends(get_reservation_service)],
-) -> Reservation:
+) -> RedirectResponse:
     try:
-        return await reservation_service.create_reservation(reservation, user)
+        reservation = await reservation_service.create_reservation(new_reservation, user)
     except exceptions.ReservationMissingWatchError:
         raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="Invalid watch") from None
     except exceptions.ReservationNotEnoughSeatsError:
         raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="Not enough seats available") from None
+    return RedirectResponse(await _get_billing_url(reservation.id, reservation.total_price))
+
+
+@router.post("/{reservation_id}/complete")
+async def complete_reservation(
+    reservation_id: UUID,
+    payment_status: str,
+    reservation_service: Annotated[ReservationService, Depends(get_reservation_service)],
+) -> Response:
+    await reservation_service.complete_reservation(reservation_id, payment_status)
+    return Response(status_code=HTTPStatus.OK)
 
 
 @router.delete("/{reservation_id}")
@@ -75,3 +88,7 @@ async def cancel_reservation(
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Reservation not found") from None
     except exceptions.ReservationPastWatchError:
         raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="Reservation is in the past") from None
+
+
+async def _get_billing_url(reservation_id: UUID, total_price: float) -> str:
+    return "/api/v1/billing?" + urlencode({"reservation_id": reservation_id, "total_price": total_price})

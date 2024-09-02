@@ -6,3 +6,8 @@ class ReservationStatus(str, Enum):
     PAID = "paid"
     UNPAID = "unpaid"
     CANCELLED = "cancelled"
+
+
+class PaymentStatus(str, Enum):
+    SUCCESSFUL = "successful"
+    FAILED = "failed"
