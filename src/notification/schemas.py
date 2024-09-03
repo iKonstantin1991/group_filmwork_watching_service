@@ -1,21 +1,10 @@
 from datetime import datetime
-from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
 
-
-class ChannelType(str, Enum):
-    EMAIL = "email"
-    WEBSOCKET = "websocket"
-    SMS = "sms"
-    PUSH = "push"
-
-
-class NotificationType(str, Enum):
-    CREATED_RESERVATION = "group_filmwork_watching.created_reservation"
-    CANCELLED_RESERVATION = "group_filmwork_watching.cancelled_reservation"
+from src.notification.constants import ChannelType, NotificationType
 
 
 class Notification(BaseModel):

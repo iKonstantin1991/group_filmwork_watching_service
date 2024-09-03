@@ -5,8 +5,9 @@ from uuid import UUID
 from aiohttp import ClientError, ClientSession
 
 from src.config import settings
+from src.notification.constants import ChannelType, NotificationType
 from src.notification.exceptions import NotificationError
-from src.notification.schemas import ChannelType, Notification, NotificationType
+from src.notification.schemas import Notification
 from src.token.service import TokenService, TokenServiceError
 
 logger = logging.getLogger(__name__)

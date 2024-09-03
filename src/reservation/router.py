@@ -8,8 +8,8 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.responses import RedirectResponse
 
 from src.filmwork.exceptions import FilmworkError
+from src.notification.constants import NotificationType
 from src.notification.dependencies import get_notification_service
-from src.notification.schemas import NotificationType
 from src.notification.service import NotificationService
 from src.reservation import exceptions
 from src.reservation.dependencies import check_reservation_filters, get_reservation_service
