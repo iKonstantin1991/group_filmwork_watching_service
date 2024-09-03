@@ -2,12 +2,13 @@ import datetime
 import logging
 from uuid import UUID, uuid4
 
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from src.place.constants import PlaceStatus
 from src.place.models import Place
+from src.reservation.constants import ReservationStatus
 from src.reservation.dependencies import get_reservation_service
 from src.reservation.models import Reservation
 from src.token.schemas import User
@@ -26,7 +27,19 @@ class WatchService:
     async def get_watches_by_filter(self, watch_filters: WatchFilters) -> list[WatchWithAvailableSeats]:
         logger.info("Getting watches by watch filters = %s", watch_filters)
         query = select(
-            WatchDb, (WatchDb.seats - func.coalesce(func.sum(Reservation.seats), 0)).label("available_seats")
+            WatchDb,
+            (
+                WatchDb.seats
+                - func.coalesce(
+                    func.sum(
+                        case(
+                            (Reservation.status == ReservationStatus.PAID, Reservation.seats),
+                            (Reservation.status == ReservationStatus.PENDING, Reservation.seats),
+                            else_=0,
+                        )
+                    ).label("available_seats")
+                )
+            ),
         )
 
         conditions = []
