@@ -23,7 +23,8 @@ class Settings(BaseSettings):
     auth_service_port: int = 80
     jwt_public_key: bytes
 
-    content_service_url: str = "http://localhost:8000"
+    content_service_url: str = "http://localhost:81"
+    notification_service_url: str = "http://localhost:82"
 
     log_file: str
 

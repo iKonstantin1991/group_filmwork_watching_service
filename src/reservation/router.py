@@ -1,3 +1,4 @@
+from contextlib import suppress
 from http import HTTPStatus
 from typing import Annotated
 from urllib.parse import urlencode
@@ -6,6 +7,10 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.responses import RedirectResponse
 
+from src.filmwork.exceptions import FilmworkError
+from src.notification.dependencies import get_notification_service
+from src.notification.schemas import NotificationType
+from src.notification.service import NotificationService
 from src.reservation import exceptions
 from src.reservation.dependencies import check_reservation_filters, get_reservation_service
 from src.reservation.schemas import Reservation, ReservationCreate, ReservationFilters
@@ -56,6 +61,7 @@ async def create_reservation(
     new_reservation: ReservationCreate,
     user: Annotated[User, Depends(get_authenticated_user)],
     reservation_service: Annotated[ReservationService, Depends(get_reservation_service)],
+    notification_service: Annotated[NotificationService, Depends(get_notification_service)],
 ) -> RedirectResponse:
     try:
         reservation = await reservation_service.create_reservation(new_reservation, user)
@@ -63,6 +69,11 @@ async def create_reservation(
         raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="Invalid watch") from None
     except exceptions.ReservationNotEnoughSeatsError:
         raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="Not enough seats available") from None
+    else:
+        with suppress(FilmworkError):
+            await notification_service.send_reservation_notification(
+                user.id, reservation.id, NotificationType.CREATED_RESERVATION
+            )
     return RedirectResponse(await _get_billing_url(reservation.id, reservation.total_price))
 
 
@@ -81,13 +92,20 @@ async def cancel_reservation(
     reservation_id: UUID,
     user: Annotated[User, Depends(get_authenticated_user)],
     reservation_service: Annotated[ReservationService, Depends(get_reservation_service)],
+    notification_service: Annotated[NotificationService, Depends(get_notification_service)],
 ) -> Reservation:
     try:
-        return await reservation_service.cancel_reservation(reservation_id, user)
+        reservation = await reservation_service.cancel_reservation(reservation_id, user)
     except (exceptions.ReservationMissingError, exceptions.ReservationPermissionError):
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="Reservation not found") from None
     except exceptions.ReservationPastWatchError:
         raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="Reservation is in the past") from None
+    else:
+        with suppress(FilmworkError):
+            await notification_service.send_reservation_notification(
+                user.id, reservation.id, NotificationType.CANCELLED_RESERVATION
+            )
+    return reservation
 
 
 async def _get_billing_url(reservation_id: UUID, total_price: float) -> str:
