@@ -5,7 +5,7 @@ from uuid import UUID
 from aiohttp import ClientError, ClientSession
 
 from src.config import settings
-from src.notification.constants import ChannelType, NotificationType
+from src.notification.constants import ChannelType, NotificationTemplateId, NotificationType
 from src.notification.exceptions import NotificationError
 from src.notification.schemas import Notification
 from src.token.service import TokenService, TokenServiceError
@@ -19,7 +19,11 @@ class NotificationService:
         self.token_service = token_service
 
     async def send_reservation_notification(
-        self, user_id: UUID, reservation_id: UUID, notification_type: NotificationType
+        self,
+        user_id: UUID,
+        reservation_id: UUID,
+        notification_type: NotificationType,
+        template_id: NotificationTemplateId,
     ) -> None:
         if settings.debug:
             return self.send_reservation_notification_debug(user_id, reservation_id)
@@ -37,6 +41,7 @@ class NotificationService:
                 recipients=[user_id],
                 channels=[ChannelType.EMAIL],
                 template_vars={"reservation_id": reservation_id},
+                template_id=template_id,
             )
 
             try:
@@ -53,5 +58,5 @@ class NotificationService:
 
     def send_reservation_notification_debug(self, user_id: UUID, reservation_id: UUID) -> None:
         logger.info(
-            "Notification about reservation_id = %s was send to user_id = %s in debug mode", user_id, reservation_id
+            "Notification about reservation_id = %s was send to user_id = %s in debug mode", reservation_id, user_id
         )

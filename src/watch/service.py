@@ -9,8 +9,8 @@ from sqlalchemy.orm import joinedload
 from src.place.constants import PlaceStatus
 from src.place.models import Place
 from src.reservation.constants import ReservationStatus
-from src.reservation.dependencies import get_reservation_service
 from src.reservation.models import Reservation
+from src.reservation.service import ReservationService
 from src.token.schemas import User
 from src.watch.constants import WatchStatus
 from src.watch.exceptions import WatchClosingError, WatchCreatingError, WatchPermissionError
@@ -21,8 +21,9 @@ logger = logging.getLogger(__name__)
 
 
 class WatchService:
-    def __init__(self, db_session: AsyncSession) -> None:
+    def __init__(self, db_session: AsyncSession, reservation_service: ReservationService) -> None:
         self._db_session = db_session
+        self._reservation_service = reservation_service
 
     async def get_watches_by_filter(self, watch_filters: WatchFilters) -> list[WatchWithAvailableSeats]:
         logger.info("Getting watches by watch filters = %s", watch_filters)
@@ -124,10 +125,9 @@ class WatchService:
         self._db_session.add(watch)
         await self._db_session.commit()
 
-        reservation_service = get_reservation_service(self._db_session)
         for reservation in watch.reservations:
             try:
-                await reservation_service.cancel_reservation(reservation.id, user)
+                await self._reservation_service.cancel_reservation(reservation.id, user)
             except Exception as error:
                 logger.error(f"An error occured while cancelling reservation with id = %s: {error}", reservation.id)
         await self._db_session.commit()
