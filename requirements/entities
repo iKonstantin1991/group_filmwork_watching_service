@@ -4,21 +4,21 @@ Place:
 id: uuid
 name: str
 address: str (full address)
-address_city: str
+city: str
 host: uuid (user id)
 created_at: datetime
-status: text ("created", "deleted")
+status: text ("open", "closed")
 
 
 Watch:
 id: uuid
 host: uuid (user id)
-filmwork: uuid
+filmwork_id: uuid
 place_id: uuid
 time: datetime
 seats: int
-price: float (or decimal)
-status: text (eg "created", "canceled", ...)
+price: float
+status: text ("created", "canceled")
 created_at: datetime
 
 
@@ -27,6 +27,7 @@ id: uuid
 watch_id: uuid
 participant_id: uuid
 created_at: datetime
-status: text ("created", "canceled")
+status: text ("pending", "paid", "unpaid", "canceled")
 seats: int
+total_price: float
 modified_at: datetime
