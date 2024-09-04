@@ -1,0 +1,11 @@
+.venv/
+.env
+
+.vscode/
+
+service/
+logs/
+
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
