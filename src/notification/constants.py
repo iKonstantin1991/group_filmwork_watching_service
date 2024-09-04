@@ -1,5 +1,6 @@
 from enum import Enum
-from uuid import UUID
+
+from src.config import settings
 
 
 class ChannelType(str, Enum):
@@ -15,5 +16,5 @@ class NotificationType(str, Enum):
 
 
 class NotificationTemplateId(Enum):
-    COMPLETED_RESERVATION = UUID("4b53be24-a687-4666-9513-ad4aa7da92a8")
-    CANCELLED_RESERVATION = UUID("19f7a35d-ec6f-4c36-a01d-574c7c8aea35")
+    COMPLETED_RESERVATION = settings.template_id_completed_reservation
+    CANCELLED_RESERVATION = settings.template_id_cancelled_reservation
