@@ -5,12 +5,17 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.postgres import get_session
+from src.reservation.dependencies import get_reservation_service
+from src.reservation.service import ReservationService
 from src.watch.schemas import WatchFilters
 from src.watch.service import WatchService
 
 
-def get_watch_service(db_session: Annotated[AsyncSession, Depends(get_session)]) -> WatchService:
-    return WatchService(db_session)
+def get_watch_service(
+    db_session: Annotated[AsyncSession, Depends(get_session)],
+    reservation_service: Annotated[ReservationService, Depends(get_reservation_service)],
+) -> WatchService:
+    return WatchService(db_session, reservation_service)
 
 
 def check_watch_filters(

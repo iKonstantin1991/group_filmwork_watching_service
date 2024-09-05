@@ -4,13 +4,18 @@ from uuid import UUID
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.notification.dependencies import get_notification_service
+from src.notification.service import NotificationService
 from src.postgres import get_session
 from src.reservation.schemas import ReservationFilters
 from src.reservation.service import ReservationService
 
 
-def get_reservation_service(db_session: Annotated[AsyncSession, Depends(get_session)]) -> ReservationService:
-    return ReservationService(db_session)
+def get_reservation_service(
+    db_session: Annotated[AsyncSession, Depends(get_session)],
+    notification_service: Annotated[NotificationService, Depends(get_notification_service)],
+) -> ReservationService:
+    return ReservationService(db_session, notification_service)
 
 
 def check_reservation_filters(

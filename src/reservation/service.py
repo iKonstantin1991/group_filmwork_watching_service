@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from datetime import datetime
 from uuid import UUID, uuid4
@@ -6,6 +7,9 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
+from src.config import settings
+from src.notification.constants import NotificationType
+from src.notification.service import NotificationService
 from src.reservation import exceptions
 from src.reservation.constants import PaymentStatus, ReservationStatus
 from src.reservation.models import Reservation as ReservationDb
@@ -17,8 +21,9 @@ logger = logging.getLogger(__name__)
 
 
 class ReservationService:
-    def __init__(self, db_session: AsyncSession) -> None:
+    def __init__(self, db_session: AsyncSession, notification_service: NotificationService) -> None:
         self._db_session = db_session
+        self._notification_service = notification_service
 
     async def get_reservation(self, reservation_id: UUID, user: User) -> Reservation | None:
         logger.info("Getting reservation %s for user %s", reservation_id, user)
@@ -104,6 +109,14 @@ class ReservationService:
         )
         if reservation_db and reservation_db.status == ReservationStatus.PENDING:
             if payment_status == PaymentStatus.SUCCESSFUL:
+                asyncio.create_task(
+                    self._notification_service.send_reservation_notification(
+                        reservation_db.participant_id,
+                        reservation_id,
+                        NotificationType.COMPLETED_RESERVATION,
+                        settings.template_id_completed_reservation,
+                    )
+                )
                 await self._update_status(reservation_db, ReservationStatus.PAID)
             else:
                 await self._update_status(reservation_db, ReservationStatus.UNPAID)
@@ -126,6 +139,14 @@ class ReservationService:
             logger.info("Forbidden to cancel, reservation %s is in the past", reservation_id)
             raise exceptions.ReservationPastWatchError
         reservation_db = await self._update_status(reservation_db, ReservationStatus.CANCELLED)
+        asyncio.create_task(
+            self._notification_service.send_reservation_notification(
+                user.id,
+                reservation_id,
+                NotificationType.CANCELLED_RESERVATION,
+                settings.template_id_cancelled_reservation,
+            )
+        )
         return Reservation.model_validate(reservation_db)
 
     async def _update_status(self, reservation_db: ReservationDb, status: ReservationStatus) -> ReservationDb:
