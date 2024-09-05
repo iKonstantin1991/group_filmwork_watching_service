@@ -4,7 +4,7 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
 
-from src.notification.constants import ChannelType, NotificationTemplateId, NotificationType
+from src.notification.constants import ChannelType, NotificationType
 
 
 class Notification(BaseModel):
@@ -13,5 +13,5 @@ class Notification(BaseModel):
     recipients: list[UUID]
     channels: list[ChannelType]
     template_vars: dict[Any, Any]
-    template_id: NotificationTemplateId | None = None
+    template_id: UUID | None = None
     group_id: UUID = Field(default_factory=uuid4)

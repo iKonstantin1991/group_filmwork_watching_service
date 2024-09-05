@@ -5,7 +5,7 @@ from uuid import UUID
 from aiohttp import ClientError, ClientSession
 
 from src.config import settings
-from src.notification.constants import ChannelType, NotificationTemplateId, NotificationType
+from src.notification.constants import ChannelType, NotificationType
 from src.notification.exceptions import NotificationError
 from src.notification.schemas import Notification
 from src.token.service import TokenService, TokenServiceError
@@ -23,7 +23,7 @@ class NotificationService:
         user_id: UUID,
         reservation_id: UUID,
         notification_type: NotificationType,
-        template_id: NotificationTemplateId,
+        template_id: UUID,
     ) -> None:
         if settings.debug:
             return self.send_reservation_notification_debug(user_id, reservation_id)

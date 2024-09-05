@@ -7,7 +7,8 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from src.notification.constants import NotificationTemplateId, NotificationType
+from src.config import settings
+from src.notification.constants import NotificationType
 from src.notification.service import NotificationService
 from src.reservation import exceptions
 from src.reservation.constants import PaymentStatus, ReservationStatus
@@ -113,7 +114,7 @@ class ReservationService:
                         reservation_db.participant_id,
                         reservation_id,
                         NotificationType.COMPLETED_RESERVATION,
-                        NotificationTemplateId.COMPLETED_RESERVATION,
+                        settings.template_id_completed_reservation,
                     )
                 )
                 await self._update_status(reservation_db, ReservationStatus.PAID)
@@ -143,7 +144,7 @@ class ReservationService:
                 user.id,
                 reservation_id,
                 NotificationType.CANCELLED_RESERVATION,
-                NotificationTemplateId.CANCELLED_RESERVATION,
+                settings.template_id_cancelled_reservation,
             )
         )
         return Reservation.model_validate(reservation_db)
