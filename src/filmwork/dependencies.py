@@ -4,7 +4,7 @@ from aiohttp import ClientSession
 from fastapi import Depends
 
 from src.filmwork.service import FilmworkService
-from src.postgres import get_session
+from src.http_client import get_session
 from src.token.dependencies import get_token_service
 from src.token.service import TokenService
 

@@ -23,7 +23,7 @@ class FilmworkService:
             return self._get_debug_filmwork(filmwork_id)
 
         try:
-            token = self.token_service.get_service_access_token()
+            token = await self.token_service.get_service_access_token()
         except TokenServiceError as error:
             raise FilmworkError("Error with token") from error
 
@@ -31,16 +31,15 @@ class FilmworkService:
             async with self._http_session.get(
                 f"{settings.content_service_url}/api/v1/films/{filmwork_id}",
                 headers={"Authorization": f"Bearer {token}"},
+                raise_for_status=True,
             ) as response:
-                response.raise_for_status()
+                return Filmwork.model_validate(await response.json())
         except ClientResponseError as error:
             if error.status == HTTPStatus.NOT_FOUND:
                 return None
             else:
                 logger.error("Failed to get filmwork by id = %s: %s", filmwork_id, error)
                 raise FilmworkError("Failed to get filmwork") from error
-
-        return Filmwork.model_validate(await response.json())
 
     def _get_debug_filmwork(self, filmwork_id: UUID) -> Filmwork:
         logger.info("Getting debug filmwork by id = %s", filmwork_id)
