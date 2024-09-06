@@ -1,5 +1,5 @@
+import json
 import logging
-from datetime import datetime
 from uuid import UUID
 
 from aiohttp import ClientError, ClientSession
@@ -31,13 +31,12 @@ class NotificationService:
         else:
             logger.info("Requesting service tokens")
             try:
-                token = self.token_service.get_service_access_token()
+                token = await self.token_service.get_service_access_token()
             except TokenServiceError as error:
                 raise NotificationError("Error with token") from error
 
             notification = Notification(
                 notification_type=notification_type,
-                send_at=datetime.now(),
                 recipients=[user_id],
                 channels=[ChannelType.EMAIL],
                 template_vars={"reservation_id": reservation_id},
@@ -46,9 +45,9 @@ class NotificationService:
 
             try:
                 async with self._http_session.post(
-                    f"{settings.notification_service_url}/api/v1/tasks",
+                    f"{settings.notification_service_url}/api/v1/tasks/",
                     headers={"Authorization": f"Bearer {token}"},
-                    json=notification.json(),
+                    json=json.loads(notification.model_dump_json()),
                     raise_for_status=True,
                 ) as resp:
                     await resp.json()
