@@ -1,0 +1,1 @@
+<h2>Dear user</h2><p>Your reservation with id {{ reservation_id }} was canceled successfully</p><p>Thank you</p>
