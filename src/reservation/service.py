@@ -109,6 +109,7 @@ class ReservationService:
         )
         if reservation_db and reservation_db.status == ReservationStatus.PENDING:
             if payment_status == PaymentStatus.SUCCESSFUL:
+                await self._update_status(reservation_db, ReservationStatus.PAID)
                 asyncio.create_task(
                     self._notification_service.send_reservation_notification(
                         reservation_db.participant_id,
@@ -117,7 +118,6 @@ class ReservationService:
                         settings.template_id_completed_reservation,
                     )
                 )
-                await self._update_status(reservation_db, ReservationStatus.PAID)
             else:
                 await self._update_status(reservation_db, ReservationStatus.UNPAID)
 
