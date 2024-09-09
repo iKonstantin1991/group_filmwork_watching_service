@@ -1,11 +1,11 @@
 from uuid import UUID
 
+from pydantic import AliasChoices, Field
 from pydantic import BaseModel as PydanticBaseModel
-from pydantic import Field
 
 
 class BaseModel(PydanticBaseModel):
-    id: UUID = Field(alias="uuid")
+    id: UUID = Field(validation_alias=AliasChoices("uuid", "id"))
 
 
 class Genre(BaseModel):
