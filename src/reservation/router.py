@@ -91,4 +91,4 @@ async def cancel_reservation(
 
 
 async def _get_billing_url(reservation_id: UUID, total_price: float) -> str:
-    return "/api/v1/billing?" + urlencode({"reservation_id": reservation_id, "total_price": total_price})
+    return "/api/v1/billing/?" + urlencode({"reservation_id": reservation_id, "total_price": total_price})
