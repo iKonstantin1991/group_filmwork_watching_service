@@ -126,10 +126,11 @@ class WatchService:
         await self._db_session.commit()
 
         for reservation in watch.reservations:
-            try:
-                await self._reservation_service.cancel_reservation(reservation.id, user)
-            except Exception as error:
-                logger.error(f"An error occured while cancelling reservation with id = %s: {error}", reservation.id)
+            if reservation.status == ReservationStatus.PAID:
+                try:
+                    await self._reservation_service.cancel_reservation(reservation.id, user)
+                except Exception as error:
+                    logger.error(f"An error occured while cancelling reservation with id = %s: {error}", reservation.id)
         await self._db_session.commit()
 
         return Watch.model_validate(watch)
