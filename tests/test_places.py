@@ -8,7 +8,7 @@ from aiohttp.test_utils import TestClient
 from fastapi.encoders import jsonable_encoder
 
 from src.place.schemas import PlaceCreate, PlaceBase
-from tests.conftest import assert_created, Client, User
+from tests.conftest import Client, User
 # from tests.utils import get_random_user
 
 
@@ -19,7 +19,7 @@ async def test_get_place_by_place_id_correctly(client: Client, user: User) -> No
     place = PlaceCreate(name="some place", address="some address", city="some city")
     created_place = await client.post(
         "api/v1/places",
-        json=jsonable_encoder(place),
+        body=jsonable_encoder(place),
         headers={"X-Request-Id": str(uuid.uuid4()), "Authorization": f"Bearer {user.token}"},
     )
     # await assert_created(created_place)
