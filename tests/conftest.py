@@ -1,5 +1,8 @@
+import uuid
+from http import HTTPStatus
 from uuid import uuid4
 
+import httpx
 import jwt
 import pytest
 
@@ -22,3 +25,11 @@ def get_random_user() -> User:
             algorithm=settings.token_algorithm,
         ),
     )
+
+
+def _build_headers(token: str) -> dict:
+    return {"X-Request-Id": str(uuid.uuid4()), "Authorization": f"Bearer {token}"}
+
+
+def assert_created(response: httpx.Response) -> None:
+    assert response.status_code == HTTPStatus.OK

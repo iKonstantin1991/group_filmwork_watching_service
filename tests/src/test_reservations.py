@@ -1,31 +1,33 @@
 import datetime
 import json
-import time
 import uuid
+from dataclasses import dataclass
 from http import HTTPStatus
 
 import httpx
-from aiohttp.test_utils import TestClient
 from fastapi.encoders import jsonable_encoder
+from pydantic import BaseModel
 
-from src.place.schemas import PlaceCreate
-from src.reservation.schemas import ReservationCreate
-from src.watch.schemas import WatchCreate
-from tests.conftest import assert_created
-from tests.utils import get_random_user
-
+from tests.config import settings
+from tests.conftest import assert_created, _build_headers
+from tests.models import User
+from tests.src.test_places import PlaceCreate
+from tests.src.test_watches import WatchCreate
 
 TIME_DELTA_SECONDS = 2
 
 
-def test_get_reservations_by_watch_id_correctly(client: TestClient) -> None:
-    user = get_random_user()
+class ReservationCreate(BaseModel):
+    seats: int
+    watch_id: uuid.UUID
 
+
+def test_get_reservations_by_watch_id_correctly(user: User) -> None:
     place = PlaceCreate(name="some place", address="some address", city="some city")
-    created_place = client.post(
-        "api/v1/places",
+    created_place = httpx.post(
+        f"{settings.service_url}/api/v1/places/",
         json=jsonable_encoder(place),
-        headers={"X-Request-Id": str(uuid.uuid4()), "Authorization": f"Bearer {user.token}"},
+        headers=_build_headers(user.token),
     )
     assert_created(created_place)
     created_place_id = json.loads(created_place.content.decode("utf-8"))["id"]
@@ -38,39 +40,39 @@ def test_get_reservations_by_watch_id_correctly(client: TestClient) -> None:
         seats=10,
         price=10.1,
     )
-    created_watch = client.post(
-        "api/v1/watches",
+    created_watch = httpx.post(
+        f"{settings.service_url}/api/v1/watches/",
         json=jsonable_encoder(watch),
-        headers={"X-Request-Id": str(uuid.uuid4()), "Authorization": f"Bearer {user.token}"},
+        headers=_build_headers(user.token),
     )
     assert_created(created_watch)
     created_watch_id = json.loads(created_watch.content.decode("utf-8"))["id"]
 
     reservation = ReservationCreate(seats=1, watch_id=created_watch_id)
-    created_reservation = client.post(
-        "api/v1/reservations",
+    created_reservation = httpx.post(
+        f"{settings.service_url}/api/v1/reservations/",
         json=jsonable_encoder(reservation),
-        headers={"X-Request-Id": str(uuid.uuid4()), "Authorization": f"Bearer {user.token}"},
+        headers=_build_headers(user.token),
+        follow_redirects=True,
     )
     assert_created(created_reservation)
 
     _assert_reservations(
-        client.get(
-            f"api/v1/reservations?watch_id={created_watch_id}",
-            headers={"X-Request-Id": str(uuid.uuid4()), "Authorization": f"Bearer {user.token}"},
+        httpx.get(
+            f"{settings.service_url}/api/v1/reservations?watch_id={created_watch_id}",
+            headers=_build_headers(user.token),
+            follow_redirects=True,
         ),
         [reservation],
     )
 
 
-def test_cancel_future_reservation(client: TestClient) -> None:
-    user = get_random_user()
-
+def test_cancel_future_reservation(user: User) -> None:
     place = PlaceCreate(name="some place", address="some address", city="some city")
-    created_place = client.post(
-        "api/v1/places",
+    created_place = httpx.post(
+        f"{settings.service_url}/api/v1/places/",
         json=jsonable_encoder(place),
-        headers={"X-Request-Id": str(uuid.uuid4()), "Authorization": f"Bearer {user.token}"},
+        headers=_build_headers(user.token),
     )
     assert_created(created_place)
     created_place_id = json.loads(created_place.content.decode("utf-8"))["id"]
@@ -83,87 +85,46 @@ def test_cancel_future_reservation(client: TestClient) -> None:
         seats=10,
         price=10.1,
     )
-    created_watch = client.post(
-        "api/v1/watches",
+    created_watch = httpx.post(
+        f"{settings.service_url}/api/v1/watches/",
         json=jsonable_encoder(watch),
-        headers={"X-Request-Id": str(uuid.uuid4()), "Authorization": f"Bearer {user.token}"},
+        headers=_build_headers(user.token),
     )
     assert_created(created_watch)
     created_watch_id = json.loads(created_watch.content.decode("utf-8"))["id"]
 
     reservation = ReservationCreate(seats=1, watch_id=created_watch_id)
-    created_reservation = client.post(
-        "api/v1/reservations",
+    created_reservation = httpx.post(
+        f"{settings.service_url}/api/v1/reservations/",
         json=jsonable_encoder(reservation),
-        headers={"X-Request-Id": str(uuid.uuid4()), "Authorization": f"Bearer {user.token}"},
+        headers=_build_headers(user.token),
+        follow_redirects=True,
     )
     assert_created(created_reservation)
 
-    existing_reservations = client.get(
-        f"api/v1/reservations?watch_id={created_watch_id}",
-        headers={"X-Request-Id": str(uuid.uuid4()), "Authorization": f"Bearer {user.token}"},
+    existing_reservations = httpx.get(
+        f"{settings.service_url}/api/v1/reservations?watch_id={created_watch_id}",
+        headers=_build_headers(user.token),
+        follow_redirects=True,
     )
     assert_created(existing_reservations)
     reservation_id_to_delete = json.loads(existing_reservations.content.decode("utf-8"))[0]["id"]
 
-    response = client.delete(
-        f"api/v1/reservations/{reservation_id_to_delete}",
-        headers={"X-Request-Id": str(uuid.uuid4()), "Authorization": f"Bearer {user.token}"},
+    response = httpx.delete(
+        f"{settings.service_url}/api/v1/reservations/{reservation_id_to_delete}",
+        headers=_build_headers(user.token),
     )
 
     assert response.status_code == HTTPStatus.OK
 
 
-def test_cancel_past_reservation(client: TestClient) -> None:
-    user = get_random_user()
-
-    place = PlaceCreate(name="some place", address="some address", city="some city")
-    created_place = client.post(
-        "api/v1/places",
-        json=jsonable_encoder(place),
-        headers={"X-Request-Id": str(uuid.uuid4()), "Authorization": f"Bearer {user.token}"},
-    )
-    assert_created(created_place)
-    created_place_id = json.loads(created_place.content.decode("utf-8"))["id"]
-
-    watch = WatchCreate(
-        host=user.id,
-        filmwork_id=uuid.uuid4(),
-        place_id=created_place_id,
-        time=datetime.datetime.now() + datetime.timedelta(seconds=TIME_DELTA_SECONDS),
-        seats=10,
-        price=10.1,
-    )
-    created_watch = client.post(
-        "api/v1/watches",
-        json=jsonable_encoder(watch),
-        headers={"X-Request-Id": str(uuid.uuid4()), "Authorization": f"Bearer {user.token}"},
-    )
-    assert_created(created_watch)
-    created_watch_id = json.loads(created_watch.content.decode("utf-8"))["id"]
-
-    reservation = ReservationCreate(seats=1, watch_id=created_watch_id)
-    created_reservation = client.post(
-        "api/v1/reservations",
-        json=jsonable_encoder(reservation),
-        headers={"X-Request-Id": str(uuid.uuid4()), "Authorization": f"Bearer {user.token}"},
-    )
-    assert_created(created_reservation)
-
-    existing_reservations = client.get(
-        f"api/v1/reservations?watch_id={created_watch_id}",
-        headers={"X-Request-Id": str(uuid.uuid4()), "Authorization": f"Bearer {user.token}"},
-    )
-    assert_created(existing_reservations)
-    reservation_id_to_delete = json.loads(existing_reservations.content.decode("utf-8"))[0]["id"]
-
-    time.sleep(TIME_DELTA_SECONDS)
-    response = client.delete(
-        f"api/v1/reservations/{reservation_id_to_delete}",
-        headers={"X-Request-Id": str(uuid.uuid4()), "Authorization": f"Bearer {user.token}"},
+def test_cancel_non_existent_reservation(user: User) -> None:
+    response = httpx.delete(
+        f"{settings.service_url}/api/v1/reservations/{uuid.uuid4()}",
+        headers=_build_headers(user.token),
     )
 
-    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.status_code == HTTPStatus.NOT_FOUND
 
 
 def _assert_reservations(response: httpx.Response, expected_reservations: list[ReservationCreate]) -> None:

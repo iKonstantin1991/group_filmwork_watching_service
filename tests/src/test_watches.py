@@ -1,27 +1,35 @@
 import datetime
 import json
-import uuid
+from dataclasses import dataclass
 from http import HTTPStatus
-from uuid import uuid4
+from uuid import uuid4, UUID
 
 import httpx
 from fastapi.encoders import jsonable_encoder
-from fastapi.testclient import TestClient
+from pydantic import BaseModel
 
-from src.place.schemas import PlaceCreate
-from src.watch.schemas import WatchCreate
-from tests.conftest import assert_created
-from tests.utils import get_random_user
+from tests.config import settings
+from tests.conftest import assert_created, _build_headers
+
+from tests.models import User
+from tests.src.test_places import PlaceCreate
 
 
-def test_get_watch_by_watch_id_correctly(client: TestClient) -> None:
-    user = get_random_user()
+class WatchCreate(BaseModel):
+    host: UUID
+    filmwork_id: UUID
+    place_id: UUID
+    time: datetime.datetime
+    seats: int
+    price: float
 
+
+def test_get_watch_by_watch_id_correctly(user: User) -> None:
     place = PlaceCreate(name="some place", address="some address", city="some city")
-    created_place = client.post(
-        "api/v1/places",
+    created_place = httpx.post(
+        f"{settings.service_url}/api/v1/places/",
         json=jsonable_encoder(place),
-        headers={"X-Request-Id": str(uuid.uuid4()), "Authorization": f"Bearer {user.token}"},
+        headers=_build_headers(user.token),
     )
     assert_created(created_place)
     created_place_id = json.loads(created_place.content.decode("utf-8"))["id"]
@@ -34,28 +42,29 @@ def test_get_watch_by_watch_id_correctly(client: TestClient) -> None:
         seats=10,
         price=10.1,
     )
-    created_watch = client.post(
-        "api/v1/watches",
+    created_watch = httpx.post(
+        f"{settings.service_url}/api/v1/watches/",
         json=jsonable_encoder(watch),
-        headers={"X-Request-Id": str(uuid.uuid4()), "Authorization": f"Bearer {user.token}"},
+        headers=_build_headers(user.token),
     )
     assert_created(created_watch)
     created_watch_id = json.loads(created_watch.content.decode("utf-8"))["id"]
 
     _assert_watches(
-        client.get(f"api/v1/watches/find?watch_id={created_watch_id}", headers={"X-Request-Id": str(uuid.uuid4())}),
+        httpx.get(
+            f"{settings.service_url}/api/v1/watches/find?watch_id={created_watch_id}",
+            headers=_build_headers(user.token),
+        ),
         [watch],
     )
 
 
-def test_close_watch_without_reservations(client: TestClient) -> None:
-    user = get_random_user()
-
+def test_close_watch_without_reservations(user: User) -> None:
     place = PlaceCreate(name="some place", address="some address", city="some city")
-    created_place = client.post(
-        "api/v1/places",
+    created_place = httpx.post(
+        f"{settings.service_url}/api/v1/places/",
         json=jsonable_encoder(place),
-        headers={"X-Request-Id": str(uuid.uuid4()), "Authorization": f"Bearer {user.token}"},
+        headers=_build_headers(user.token),
     )
     assert_created(created_place)
     created_place_id = json.loads(created_place.content.decode("utf-8"))["id"]
@@ -68,17 +77,17 @@ def test_close_watch_without_reservations(client: TestClient) -> None:
         seats=10,
         price=10.1,
     )
-    created_watch = client.post(
-        "api/v1/watches",
+    created_watch = httpx.post(
+        f"{settings.service_url}/api/v1/watches/",
         json=jsonable_encoder(watch),
-        headers={"X-Request-Id": str(uuid.uuid4()), "Authorization": f"Bearer {user.token}"},
+        headers=_build_headers(user.token),
     )
     assert_created(created_watch)
     created_watch_id = json.loads(created_watch.content.decode("utf-8"))["id"]
 
-    response = client.delete(
-        f"api/v1/watches/{created_watch_id}",
-        headers={"X-Request-Id": str(uuid.uuid4()), "Authorization": f"Bearer {user.token}"},
+    response = httpx.delete(
+        f"{settings.service_url}/api/v1/watches/{created_watch_id}",
+        headers=_build_headers(user.token),
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND

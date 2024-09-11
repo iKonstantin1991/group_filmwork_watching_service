@@ -1,11 +1,17 @@
-import uuid
 from http import HTTPStatus
 
 import httpx
+from pydantic import BaseModel
 
 from tests.config import settings
-from tests.conftest import get_random_user
+from tests.conftest import get_random_user, _build_headers
 from tests.models import User
+
+
+class PlaceCreate(BaseModel):
+    name: str
+    address: str
+    city: str
 
 
 def test_get_place_by_place_id_correctly(user: User) -> None:
@@ -77,7 +83,3 @@ def _assert_place(actual: dict, expected: dict) -> None:
     assert "created_at" in actual
     for key, value in expected.items():
         assert actual[key] == value
-
-
-def _build_headers(token: str) -> dict:
-    return {"X-Request-Id": str(uuid.uuid4()), "Authorization": f"Bearer {token}"}
