@@ -4,7 +4,7 @@ import httpx
 from pydantic import BaseModel
 
 from tests.config import settings
-from tests.conftest import get_random_user, _build_headers
+from tests.conftest import _build_headers, get_random_user
 from tests.models import User
 
 

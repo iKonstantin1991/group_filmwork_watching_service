@@ -1,16 +1,14 @@
 import datetime
 import json
-from dataclasses import dataclass
 from http import HTTPStatus
-from uuid import uuid4, UUID
+from uuid import UUID, uuid4
 
 import httpx
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 
 from tests.config import settings
-from tests.conftest import assert_created, _build_headers
-
+from tests.conftest import _build_headers, assert_created
 from tests.models import User
 from tests.src.test_places import PlaceCreate
 

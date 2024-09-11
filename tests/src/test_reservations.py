@@ -1,7 +1,6 @@
 import datetime
 import json
 import uuid
-from dataclasses import dataclass
 from http import HTTPStatus
 
 import httpx
@@ -9,12 +8,10 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 
 from tests.config import settings
-from tests.conftest import assert_created, _build_headers
+from tests.conftest import _build_headers, assert_created
 from tests.models import User
 from tests.src.test_places import PlaceCreate
 from tests.src.test_watches import WatchCreate
-
-TIME_DELTA_SECONDS = 2
 
 
 class ReservationCreate(BaseModel):
