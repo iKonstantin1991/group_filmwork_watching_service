@@ -8,7 +8,7 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 
 from tests.config import settings
-from tests.conftest import _build_headers, assert_created
+from tests.conftest import assert_created, build_headers
 from tests.models import User
 from tests.src.test_places import PlaceCreate
 
@@ -27,7 +27,7 @@ def test_get_watch_by_watch_id_correctly(user: User) -> None:
     created_place = httpx.post(
         f"{settings.service_url}/api/v1/places/",
         json=jsonable_encoder(place),
-        headers=_build_headers(user.token),
+        headers=build_headers(user.token),
     )
     assert_created(created_place)
     created_place_id = json.loads(created_place.content.decode("utf-8"))["id"]
@@ -43,7 +43,7 @@ def test_get_watch_by_watch_id_correctly(user: User) -> None:
     created_watch = httpx.post(
         f"{settings.service_url}/api/v1/watches/",
         json=jsonable_encoder(watch),
-        headers=_build_headers(user.token),
+        headers=build_headers(user.token),
     )
     assert_created(created_watch)
     created_watch_id = json.loads(created_watch.content.decode("utf-8"))["id"]
@@ -51,7 +51,7 @@ def test_get_watch_by_watch_id_correctly(user: User) -> None:
     _assert_watches(
         httpx.get(
             f"{settings.service_url}/api/v1/watches/find?watch_id={created_watch_id}",
-            headers=_build_headers(user.token),
+            headers=build_headers(user.token),
         ),
         [watch],
     )
@@ -62,7 +62,7 @@ def test_close_watch_without_reservations(user: User) -> None:
     created_place = httpx.post(
         f"{settings.service_url}/api/v1/places/",
         json=jsonable_encoder(place),
-        headers=_build_headers(user.token),
+        headers=build_headers(user.token),
     )
     assert_created(created_place)
     created_place_id = json.loads(created_place.content.decode("utf-8"))["id"]
@@ -78,14 +78,14 @@ def test_close_watch_without_reservations(user: User) -> None:
     created_watch = httpx.post(
         f"{settings.service_url}/api/v1/watches/",
         json=jsonable_encoder(watch),
-        headers=_build_headers(user.token),
+        headers=build_headers(user.token),
     )
     assert_created(created_watch)
     created_watch_id = json.loads(created_watch.content.decode("utf-8"))["id"]
 
     response = httpx.delete(
         f"{settings.service_url}/api/v1/watches/{created_watch_id}",
-        headers=_build_headers(user.token),
+        headers=build_headers(user.token),
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND

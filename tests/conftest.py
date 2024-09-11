@@ -27,7 +27,7 @@ def get_random_user() -> User:
     )
 
 
-def _build_headers(token: str) -> dict:
+def build_headers(token: str) -> dict:
     return {"X-Request-Id": str(uuid.uuid4()), "Authorization": f"Bearer {token}"}
 
 

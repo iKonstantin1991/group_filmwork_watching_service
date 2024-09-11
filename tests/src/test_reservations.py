@@ -8,7 +8,7 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 
 from tests.config import settings
-from tests.conftest import _build_headers, assert_created
+from tests.conftest import assert_created, build_headers
 from tests.models import User
 from tests.src.test_places import PlaceCreate
 from tests.src.test_watches import WatchCreate
@@ -24,7 +24,7 @@ def test_get_reservations_by_watch_id_correctly(user: User) -> None:
     created_place = httpx.post(
         f"{settings.service_url}/api/v1/places/",
         json=jsonable_encoder(place),
-        headers=_build_headers(user.token),
+        headers=build_headers(user.token),
     )
     assert_created(created_place)
     created_place_id = json.loads(created_place.content.decode("utf-8"))["id"]
@@ -40,7 +40,7 @@ def test_get_reservations_by_watch_id_correctly(user: User) -> None:
     created_watch = httpx.post(
         f"{settings.service_url}/api/v1/watches/",
         json=jsonable_encoder(watch),
-        headers=_build_headers(user.token),
+        headers=build_headers(user.token),
     )
     assert_created(created_watch)
     created_watch_id = json.loads(created_watch.content.decode("utf-8"))["id"]
@@ -49,7 +49,7 @@ def test_get_reservations_by_watch_id_correctly(user: User) -> None:
     created_reservation = httpx.post(
         f"{settings.service_url}/api/v1/reservations/",
         json=jsonable_encoder(reservation),
-        headers=_build_headers(user.token),
+        headers=build_headers(user.token),
         follow_redirects=True,
     )
     assert_created(created_reservation)
@@ -57,7 +57,7 @@ def test_get_reservations_by_watch_id_correctly(user: User) -> None:
     _assert_reservations(
         httpx.get(
             f"{settings.service_url}/api/v1/reservations?watch_id={created_watch_id}",
-            headers=_build_headers(user.token),
+            headers=build_headers(user.token),
             follow_redirects=True,
         ),
         [reservation],
@@ -69,7 +69,7 @@ def test_cancel_future_reservation(user: User) -> None:
     created_place = httpx.post(
         f"{settings.service_url}/api/v1/places/",
         json=jsonable_encoder(place),
-        headers=_build_headers(user.token),
+        headers=build_headers(user.token),
     )
     assert_created(created_place)
     created_place_id = json.loads(created_place.content.decode("utf-8"))["id"]
@@ -85,7 +85,7 @@ def test_cancel_future_reservation(user: User) -> None:
     created_watch = httpx.post(
         f"{settings.service_url}/api/v1/watches/",
         json=jsonable_encoder(watch),
-        headers=_build_headers(user.token),
+        headers=build_headers(user.token),
     )
     assert_created(created_watch)
     created_watch_id = json.loads(created_watch.content.decode("utf-8"))["id"]
@@ -94,14 +94,14 @@ def test_cancel_future_reservation(user: User) -> None:
     created_reservation = httpx.post(
         f"{settings.service_url}/api/v1/reservations/",
         json=jsonable_encoder(reservation),
-        headers=_build_headers(user.token),
+        headers=build_headers(user.token),
         follow_redirects=True,
     )
     assert_created(created_reservation)
 
     existing_reservations = httpx.get(
         f"{settings.service_url}/api/v1/reservations?watch_id={created_watch_id}",
-        headers=_build_headers(user.token),
+        headers=build_headers(user.token),
         follow_redirects=True,
     )
     assert_created(existing_reservations)
@@ -109,7 +109,7 @@ def test_cancel_future_reservation(user: User) -> None:
 
     response = httpx.delete(
         f"{settings.service_url}/api/v1/reservations/{reservation_id_to_delete}",
-        headers=_build_headers(user.token),
+        headers=build_headers(user.token),
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -118,7 +118,7 @@ def test_cancel_future_reservation(user: User) -> None:
 def test_cancel_non_existent_reservation(user: User) -> None:
     response = httpx.delete(
         f"{settings.service_url}/api/v1/reservations/{uuid.uuid4()}",
-        headers=_build_headers(user.token),
+        headers=build_headers(user.token),
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
